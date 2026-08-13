@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Store Label Printer",
   description: "WebUSB thermal label printer for Madhav Departmental Store",
-  manifest: "/manifest.json",
+  // manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
