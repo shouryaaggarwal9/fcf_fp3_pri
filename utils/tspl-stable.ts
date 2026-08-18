@@ -1,4 +1,7 @@
 // utils/tspl.ts
+
+// MINOR STYLING ISSUES
+
 import { StoreItem } from "@/data/items";
 
 interface QueueItem extends StoreItem {
@@ -12,30 +15,11 @@ const ADDRESS_2 = "I.P EXTENSION, DELHI-110092";
 const CUST_CARE_NO = "011-47158021";
 const CUST_CARE_EMAIL = "deepagg1234@gmail.com";
 
-// Replicates Python's calculate_best_before logic
-function calculateBestBefore(packDate: Date, months: number): Date {
-  const targetMonth = packDate.getMonth() + months;
-  const year = packDate.getFullYear() + Math.floor(targetMonth / 12);
-  const month = targetMonth % 12;
-
-  // month + 1 with day = 0 returns the last day of 'month'
-  const daysInTargetMonth = new Date(year, month + 1, 0).getDate();
-  const day = Math.min(Math.max(1, packDate.getDate() - 1), daysInTargetMonth);
-
-  return new Date(year, month, day);
-}
-
-function formatDate(date: Date): string {
-  const d = date.getDate().toString().padStart(2, "0");
-  const m = (date.getMonth() + 1).toString().padStart(2, "0");
-  const y = date.getFullYear();
-  return `${d}/${m}/${y}`;
-}
-
-export function generateTSPL(queue: QueueItem[]): Uint8Array {
+export function generateTSPL(queue: QueueItem[]): any {
   const encoder = new TextEncoder();
   let finalBuffer = new Uint8Array(0);
 
+  // Helper to safely merge byte arrays
   const append = (buffer: Uint8Array) => {
     const temp = new Uint8Array(finalBuffer.length + buffer.length);
     temp.set(finalBuffer, 0);
@@ -49,9 +33,9 @@ export function generateTSPL(queue: QueueItem[]): Uint8Array {
   );
 
   const today = new Date();
-  const pkdStr = formatDate(today);
+  const pkdStr = `${today.getDate().toString().padStart(2, "0")}/${(today.getMonth() + 1).toString().padStart(2, "0")}/${today.getFullYear()}`;
 
-  // 2. Create Canvas (600x400 @ 203 DPI)
+  // 2. Create the Canvas
   const canvas = document.createElement("canvas");
   canvas.width = 600;
   canvas.height = 400;
@@ -59,59 +43,41 @@ export function generateTSPL(queue: QueueItem[]): Uint8Array {
 
   if (!ctx) return finalBuffer;
 
-  // Matching Python fonts (Arial Bold / Arial)
-  const FONT_SMALL = 'bold 20px Arial, "Helvetica Neue", sans-serif';
-  const FONT_EMAIL = 'bold 22px Arial, "Helvetica Neue", sans-serif';
-  const FONT_MED = 'bold 24px Arial, "Helvetica Neue", sans-serif';
-  const FONT_BOLD = 'bold 26px Arial, "Helvetica Neue", sans-serif';
-  const FONT_TITLE = 'bold 32px Arial, "Helvetica Neue", sans-serif';
-
-  const LEFT_MARGIN = 10;
-  const RIGHT_MARGIN = 20;
-  const TOP_MARGIN = 20;
-
   for (const item of queue) {
+    // Clear printer buffer for each new label design
     append(encoder.encode("CLS\r\n"));
 
     // Fill white background
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Set up text drawing
     ctx.fillStyle = "black";
     ctx.textBaseline = "top";
 
-    const useBy = calculateBestBefore(today, item.shelfLife);
-    const useByStr = formatDate(useBy);
+    const useBy = new Date(today);
+    useBy.setMonth(useBy.getMonth() + item.shelfLife);
+    const useByStr = `${useBy.getDate().toString().padStart(2, "0")}/${(useBy.getMonth() + 1).toString().padStart(2, "0")}/${useBy.getFullYear()}`;
 
-    // Kept flexible weight formatting as requested
     const weightStr =
       item.weight >= 1000 ? `${item.weight / 1000}Kg` : `${item.weight}g`;
     const pricePerG = (item.mrp / item.weight).toFixed(2);
 
-    let y = TOP_MARGIN;
+    let y = 16;
+    const LEFT = 20,
+      RIGHT = 20;
 
-    // Helper using actual text metrics matching Python's textbbox
-    const getTextHeight = (text: string, font: string): number => {
-      ctx.font = font;
-      const metrics = ctx.measureText(text);
-      const measuredHeight =
-        metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-      const fallbackHeight = parseInt(font.match(/(\d+)px/)![1], 10);
-      return Math.max(measuredHeight, fallbackHeight);
-    };
-
+    // --- TEXT LAYOUT HELPERS (With your Regex Fix) ---
     const left = (text: string, font: string, spacing = 4) => {
       ctx.font = font;
-      ctx.fillText(text, LEFT_MARGIN, y);
-      y += getTextHeight(text, font) + spacing;
+      ctx.fillText(text, LEFT, y);
+      y += parseInt(font.match(/(\d+)px/)![1]) + spacing;
     };
 
     const centered = (text: string, font: string, spacing = 4) => {
       ctx.font = font;
-      const textWidth = ctx.measureText(text).width;
-      const x = Math.floor((canvas.width - textWidth) / 2);
-      ctx.fillText(text, x, y);
-      y += getTextHeight(text, font) + spacing;
+      ctx.fillText(text, (canvas.width - ctx.measureText(text).width) / 2, y);
+      y += parseInt(font.match(/(\d+)px/)![1]) + spacing;
     };
 
     const twoCols = (
@@ -121,21 +87,29 @@ export function generateTSPL(queue: QueueItem[]): Uint8Array {
       spacing = 4,
     ) => {
       ctx.font = font;
-      ctx.fillText(leftText, LEFT_MARGIN, y);
-      const rightWidth = ctx.measureText(rightText).width;
-      const rx = canvas.width - RIGHT_MARGIN - rightWidth;
-      ctx.fillText(rightText, rx, y);
-      y += getTextHeight(leftText, font) + spacing;
+      ctx.fillText(leftText, LEFT, y);
+      ctx.fillText(
+        rightText,
+        canvas.width - RIGHT - ctx.measureText(rightText).width,
+        y,
+      );
+      y += parseInt(font.match(/(\d+)px/)![1]) + spacing;
     };
+
+    const FONT_SMALL = "bold 20px sans-serif";
+    const FONT_EMAIL = "bold 22px sans-serif";
+    const FONT_MED = "bold 24px sans-serif";
+    const FONT_BOLD = "bold 28px sans-serif";
+    const FONT_TITLE = "900 34px sans-serif";
 
     // --- DRAW DYNAMIC LABEL DATA ---
     left(`PACKER REGN. NO. - ${PACKER_REGN}`, FONT_MED, 2);
     left("PACKED BY:", FONT_MED, 10);
-    centered(STORE_NAME, FONT_TITLE, 12);
-    centered(ADDRESS_1, FONT_MED, 3);
-    centered(ADDRESS_2, FONT_MED, 3);
-    centered(`CUSTOMER CARE NO- ${CUST_CARE_NO}`, FONT_MED, 3);
-    centered(`CUSTOMER CARE EMAIL- ${CUST_CARE_EMAIL}`, FONT_EMAIL, 12);
+    centered(STORE_NAME, FONT_TITLE, 14);
+    centered(ADDRESS_1, FONT_MED, 4);
+    centered(ADDRESS_2, FONT_MED, 4);
+    centered(`CUSTOMER CARE NO- ${CUST_CARE_NO}`, FONT_MED, 4);
+    centered(`CUSTOMER CARE EMAIL- ${CUST_CARE_EMAIL}`, FONT_EMAIL, 16);
 
     twoCols(`ITEM: ${item.name}`, `PKD: ${pkdStr}`, FONT_BOLD, 12);
     twoCols(`NET WEIGHT: ${weightStr}`, `USE BY: ${useByStr}`, FONT_BOLD, 12);
@@ -143,10 +117,12 @@ export function generateTSPL(queue: QueueItem[]): Uint8Array {
     left(`MRP: ₹ ${item.mrp}.00 (Rs. ${pricePerG} per g)`, FONT_BOLD, 4);
     left("(INCL. OF ALL TAXES)", FONT_SMALL, 0);
 
-    // 3. Convert Canvas pixels to 1-bit TSPL Monochrome Bitmap
+    // 3. Extract pixels and convert to TSPL Bitmap
     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
     const widthBytes = Math.ceil(canvas.width / 8);
     const bitmapData = new Uint8Array(widthBytes * canvas.height);
+
+    // Fill with 1s (White Background)
     bitmapData.fill(255);
 
     for (let py = 0; py < canvas.height; py++) {
@@ -155,6 +131,7 @@ export function generateTSPL(queue: QueueItem[]): Uint8Array {
         const r = imgData[idx];
         const a = imgData[idx + 3];
 
+        // If the pixel is dark text, clear the bit to 0 (Black)
         if (r < 128 && a > 128) {
           const byteIndex = py * widthBytes + Math.floor(px / 8);
           const bitIndex = 7 - (px % 8);
@@ -163,7 +140,7 @@ export function generateTSPL(queue: QueueItem[]): Uint8Array {
       }
     }
 
-    // 4. Output TSPL Commands
+    // 4. Append the BITMAP command, the raw data, and print the requested quantity
     append(encoder.encode(`BITMAP 0,0,${widthBytes},${canvas.height},0,`));
     append(bitmapData);
     append(encoder.encode(`\r\nPRINT ${item.quantity},1\r\n`));
