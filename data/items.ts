@@ -352,7 +352,7 @@ export const initialItems: StoreItem[] = [
   },
   { id: "MAKHANA_100g", name: "MAKHANA", weight: 100, mrp: 160, shelfLife: 3 },
   { id: "MAKHANA_250g", name: "MAKHANA", weight: 250, mrp: 400, shelfLife: 3 },
-  { id: "SUGAR_1Kg", name: "SUGAR", weight: 1000, mrp: 60, shelfLife: 3 },
+  { id: "SUGAR_1Kg", name: "SUGAR", weight: 1000, mrp: 65, shelfLife: 3 },
   {
     id: "ALOO_CHIPS_200g",
     name: "ALOO CHIPS",
