@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
     name: "Madhav Labels",
-    short_name: "Labels",
+    short_name: "Madhav Labels",
     description: "WebUSB thermal label printer for Madhav Departmental Store",
     start_url: "/",
     scope: "/",
