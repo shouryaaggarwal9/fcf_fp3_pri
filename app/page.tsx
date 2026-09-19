@@ -9,6 +9,44 @@ interface QueueItem extends StoreItem {
   quantity: number;
 }
 
+/** Quantity shown as a tappable +/- stepper with a directly editable, digits-only field. */
+function QuantityInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (quantity: number) => void;
+}) {
+  // Local draft while typing; null means "display the committed value".
+  const [draft, setDraft] = useState<string | null>(null);
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      autoComplete="off"
+      aria-label="Quantity"
+      className="w-14 h-10 text-center bg-white rounded-md shadow-sm text-slate-800 font-bold text-lg outline-none border border-transparent focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+      value={draft ?? String(value)}
+      onFocus={(e) => {
+        setDraft(String(value));
+        e.currentTarget.select();
+      }}
+      onChange={(e) => {
+        // Keep digits only (numeric keypad on mobile), strip leading zeros.
+        const digits = e.target.value.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+        setDraft(digits);
+        if (digits) onChange(Math.max(1, parseInt(digits, 10)));
+      }}
+      onBlur={() => setDraft(null)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+      }}
+    />
+  );
+}
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -126,6 +164,12 @@ export default function Home() {
         }
         return q;
       }),
+    );
+  };
+
+  const setQuantity = (id: string, value: number) => {
+    setQueue((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, quantity: Math.max(1, value) } : q)),
     );
   };
 
@@ -289,9 +333,10 @@ export default function Home() {
                     >
                       -
                     </button>
-                    <span className="w-10 text-center font-bold text-slate-800 text-lg">
-                      {item.quantity}
-                    </span>
+                    <QuantityInput
+                      value={item.quantity}
+                      onChange={(quantity) => setQuantity(item.id, quantity)}
+                    />
                     <button
                       onClick={() => updateQuantity(item.id, 1)}
                       className="w-10 h-10 flex items-center justify-center bg-white rounded-md shadow-sm text-slate-700 hover:bg-slate-50 font-bold text-xl active:scale-95 transition-transform"
