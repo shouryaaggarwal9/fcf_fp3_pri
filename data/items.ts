@@ -1,5 +1,7 @@
 // data/items.ts
 
+// deploy on vercel
+
 export interface StoreItem {
   id: string;
   name: string;
@@ -374,20 +376,20 @@ export const initialItems: StoreItem[] = [
     mrp: 50,
     shelfLife: 3,
   },
-  {
-    id: "BADAM_GIRI_SP_250g",
-    name: "BADAM GIRI (SP)",
-    weight: 250,
-    mrp: 300,
-    shelfLife: 2,
-  },
-  {
-    id: "BADAM_GIRI_SP_500g",
-    name: "BADAM GIRI (SP)",
-    weight: 500,
-    mrp: 600,
-    shelfLife: 2,
-  },
+  // {
+  //   id: "BADAM_GIRI_SP_250g",
+  //   name: "BADAM GIRI (SP)",
+  //   weight: 250,
+  //   mrp: 300,
+  //   shelfLife: 2,
+  // },
+  // {
+  //   id: "BADAM_GIRI_SP_500g",
+  //   name: "BADAM GIRI (SP)",
+  //   weight: 500,
+  //   mrp: 600,
+  //   shelfLife: 2,
+  // },
   {
     id: "KAJU_210N_250g",
     name: "KAJU (210N)",
@@ -406,7 +408,7 @@ export const initialItems: StoreItem[] = [
     id: "BREAKFAST_MIX_500g",
     name: "BREAKFAST MIX",
     weight: 500,
-    mrp: 400,
+    mrp: 380,
     shelfLife: 2,
   },
   { id: "BOORA_500g", name: "BOORA", weight: 500, mrp: 40, shelfLife: 3 },
