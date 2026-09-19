@@ -1,5 +1,7 @@
 // data/items.ts
 
+// deploy on vercel
+
 export interface StoreItem {
   id: string;
   name: string;
