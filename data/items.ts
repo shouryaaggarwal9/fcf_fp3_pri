@@ -406,7 +406,7 @@ export const initialItems: StoreItem[] = [
     id: "BREAKFAST_MIX_500g",
     name: "BREAKFAST MIX",
     weight: 500,
-    mrp: 400,
+    mrp: 380,
     shelfLife: 2,
   },
   { id: "BOORA_500g", name: "BOORA", weight: 500, mrp: 40, shelfLife: 3 },
